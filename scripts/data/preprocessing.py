@@ -8,18 +8,25 @@ from glob import glob
 import seaborn as sns
 from PIL import Image
 
-def prepareimages(folder_benign_path,folder_malignant_path):
+def prepareimages(folder_benign_path,folder_malignant_path, size = (224,224)):
     """ 
     This function reads images from the specified folders
-    Input: Two strings, each is a folder path to benign and malignant: train and test folders
+    Input: 
+        - Two strings, each is a folder path to benign and malignant: train and test folders
+        - Required image size (default = 224,224 across all images in the dataset)
     Output: Four Numpy arrays split into X and y for benign and malignant images each
     """
-
-    read = lambda imgname: np.asarray(Image.open(imgname).convert("RGB"))     #lambda function to convert an image to RGB(if necessary) and returns a numpy array of the same
+    def read_and_resize(imgname):
+        """
+            Helper Function to resize and normalize images
+        """
+        img = lambda imgname, size: np.asarray(Image.open(imgname).convert("RGB").resize(size), dtype = 'float32') / 255.0
+        return img
+    
     # Load in pictures 
-    imgs_benign = [read(os.path.join(folder_benign_path, filename)) for filename in os.listdir(folder_benign_path)]
+    imgs_benign = [read_and_resize(os.path.join(folder_benign_path, filename)) for filename in os.listdir(folder_benign_path)]
     X_benign = np.array(imgs_benign, dtype='uint8')
-    imgs_malignant = [read(os.path.join(folder_malignant_path, filename)) for filename in os.listdir(folder_malignant_path)]
+    imgs_malignant = [read_and_resize(os.path.join(folder_malignant_path, filename)) for filename in os.listdir(folder_malignant_path)]
     X_malignant = np.array(imgs_malignant, dtype='uint8')
 
     # Create labels: benign are labelled as 0 and malignant are labelled  as 1
@@ -43,3 +50,6 @@ def shuffledata(X_benign,X_malignant, y_benign, y_malignant):
     X = X[s]
     y = y[s]
     return X,y
+
+# Data Augmentation Steps
+
